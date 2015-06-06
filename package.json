@@ -1,7 +1,7 @@
 {
-  "name": "tilestrata-vtile-rasterizer",
+  "name": "tilestrata-vtile-raster",
   "version": "0.0.1",
-  "description": "A TileStrata plugin rendering vector tiles to images",
+  "description": "A TileStrata plugin for rendering vector tiles to images",
   "author": "Brandon Reavis <brandon@naturalatlas.com>",
   "license": "Apache License, v2.0",
   "main": "index.js",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/naturalatlas/tilestrata-vtile-rasterizer.git"
+    "url": "https://github.com/naturalatlas/tilestrata-vtile-raster.git"
   },
   "keywords": [
     "tilestrata",
@@ -21,9 +21,9 @@
     "mapnik"
   ],
   "bugs": {
-    "url": "https://github.com/naturalatlas/tilestrata-vtile-rasterizer/issues"
+    "url": "https://github.com/naturalatlas/tilestrata-vtile-raster/issues"
   },
-  "homepage": "https://github.com/naturalatlas/tilestrata-vtile-rasterizer",
+  "homepage": "https://github.com/naturalatlas/tilestrata-vtile-raster",
   "dependencies": {
     "async": "^1.2.0",
     "async-cache": "1.0.0",
