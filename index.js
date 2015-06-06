@@ -1,15 +1,17 @@
 var _ = require('lodash');
 var Backend = require('./backend.js');
 
-module.exports = function(options) {
-	options = _.defaults(options, {
+module.exports = function(common, options) {
+	var defaults = {
 		xml: null,
 		resolution: 4,
 		bufferSize: 128,
 		tileSize: 256,
 		scale: 1,
 		format: "png"
-	});
+	};
+
+	options = _.extend({}, defaults, common, options);
 
 	var source;
 
