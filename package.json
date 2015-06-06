@@ -25,9 +25,10 @@
   },
   "homepage": "https://github.com/naturalatlas/tilestrata-vtile-rasterizer",
   "dependencies": {
-    "tilestrata-dependency": "^0.2.2",
+    "async": "^1.2.0",
+    "async-cache": "1.0.0",
     "lodash": "^2.4.1",
-    "async-cache": "1.0.0"
+    "tilestrata-dependency": "^0.2.2"
   },
   "devDependencies": {
     "chai": "^1.10.0",
