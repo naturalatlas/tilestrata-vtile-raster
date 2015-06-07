@@ -1,4 +1,5 @@
 var async = require('async');
+var path = require('path');
 var mapnik = require('mapnik');
 var TileStrata = require('tilestrata');
 var TileRequest = TileStrata.TileRequest;
@@ -15,14 +16,15 @@ function Backend(server, options) {
 	this.tileSize = options.tileSize;
 	this.resolution = options.resolution;
 	this.interactivity = options.interactivity;
-	this.format = this.interactivity ? "json" : (options.format || "png");
+	this.format = this.interactivity ? "utf" : (options.format || "png");
+	this.options = options;
 
 	this.pbflayer = options.tilesource[0];
 	this.pbffile = options.tilesource[1];
 
 	this.tilesource = dependency(this.pbflayer, this.pbffile);
-	this.bufferSize = options.bufferSize; // this.tilesource.bufferSize;
-	this.metatile = options.metatile; // this.tilesource.metatile;
+	this.bufferSize = options.bufferSize;
+	this.metatile = options.metatile;
 
 	this.server = server;
 	this.map = null;
@@ -62,15 +64,30 @@ function Backend(server, options) {
 };
 
 Backend.prototype.initialize = function(callback) {
+	// initialize mapnik
+	mapnik.register_default_input_plugins();
+	if (this.options.autoLoadFonts) {
+        if (mapnik.register_default_fonts) mapnik.register_default_fonts();
+        if (mapnik.register_system_fonts) mapnik.register_system_fonts();
+	}
+
+	// initialize map
+	var mapOptions = {base: path.dirname(this.xml) + '/'};
 	var dim = this.metatile * this.tileSize;
 	this.map = new mapnik.Map(dim, dim);
-	this.map.load(this.xml, callback);
+	this.map.load(this.xml, mapOptions, callback);
 };
 
 Backend.prototype.getTile = function(z, x, y, callback) {
 	var self = this;
 	this.tilecache.get([z,x,y].join(','), function(err, buffer) {
 		if (err) return callback(err);
+		if (self.interactivity) {
+			var utfgrid = buffer;
+			buffer = new Buffer(JSON.stringify(utfgrid), 'utf8');
+			buffer._utfgrid = utfgrid;
+		}
+
 		callback(null, buffer, self.getHeader(buffer));
 	});
 };
@@ -86,10 +103,10 @@ Backend.prototype.getTile = function(z, x, y, callback) {
  */
 Backend.prototype.getVectorTileInfo = function(z, x, y){
 	var dz;
-	if(this.metatile === 1) dz = 0;
-	else if(this.metatile === 2) dz = 1;
-	else if(this.metatile === 4) dz = 2;
-	else if(this.metatile === 8) dz = 3;
+	if (this.metatile === 1) dz = 0;
+	else if (this.metatile === 2) dz = 1;
+	else if (this.metatile === 4) dz = 2;
+	else if (this.metatile === 8) dz = 3;
 	else throw new Error("Unsupported metatile setting: "+this.metatile);
 
 	return {

@@ -8,7 +8,9 @@ module.exports = function(common, options) {
 		bufferSize: 128,
 		tileSize: 256,
 		scale: 1,
-		format: "png"
+		format: "png",
+		interactivity: false,
+		autoLoadFonts: true
 	};
 
 	options = _.extend({}, defaults, common, options);
