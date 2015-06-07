@@ -3,7 +3,7 @@
 [![Build Status](http://img.shields.io/travis/naturalatlas/tilestrata-vtile-raster/master.svg?style=flat)](https://travis-ci.org/naturalatlas/tilestrata-vtile-raster)
 [![Coverage Status](http://img.shields.io/coveralls/naturalatlas/tilestrata-vtile-raster/master.svg?style=flat)](https://coveralls.io/r/naturalatlas/tilestrata-vtile-raster)
 
-A [TileStrata](https://github.com/naturalatlas/tilestrata) plugin for rendering [mapnik](http://mapnik.org/) vector tiles (pbf) into raster images. Use the [tilestrata-vtile](https://github.com/naturalatlas/tilestrata-vtile) plugin for generating the vector tiles.
+A [TileStrata](https://github.com/naturalatlas/tilestrata) plugin for rendering [mapnik](http://mapnik.org/) vector tiles (pbf) into raster images. Use the [tilestrata-vtile](https://github.com/naturalatlas/tilestrata-vtile) plugin for generating the vector tiles. To use this plugin, you must have [node-mapnik](https://github.com/mapnik/node-mapnik) in your dependency tree.
 
 ### Sample Usage
 
