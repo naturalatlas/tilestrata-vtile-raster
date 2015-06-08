@@ -23,7 +23,7 @@ server.layer('mylayer')
     .route('t.png').use(vtileraster(common, {
         tilesource: ['mylayer', 't.pbf']
     }))
-    .route('i.json').use(rasterizer(common, {
+    .route('i.json').use(vtileraster(common, {
         tilesource: ['mylayer', 't.pbf'],
         interactivity: true
     }));
