@@ -146,7 +146,7 @@ Backend.prototype.getRasterMetatile = function(z, x, y, callback) {
 
 			// vtile.z will be less than z if metatiling is used
 			// this forces the real scale denominator to be used
-			scale_denominator:  559082264.028 / (1 << z)
+			scale_denominator:  559082264.028 / (1 << z) / self.scale
 		};
 
 		if (self.interactivity) {
