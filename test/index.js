@@ -38,6 +38,38 @@ describe('"tilestrata-vtile-raster"', function() {
 			});
 		});
 	});
+	it('should be able to rasterize output when caches are disabled', function(done) {
+		var server = new TileServer();
+
+		var opts = {
+			xml: __dirname + '/data/test.xml',
+			metatile: 4,
+			bufferSize: 128
+		};
+
+		var req = TileRequest.parse('/layer/5/5/12/tile.png');
+		req.headers['x-tilestrata-skipcache'] = '1';
+
+		server.layer('layer').route('tile.pbf').use({
+			serve: function(server, req, callback) {
+				return callback(null, fs.readFileSync(__dirname + '/data/world_metatile.pbf'), {});
+			}
+		});
+		server.layer('layer').route('tile.png').use(vtileraster(opts, {
+			tilesource: ['layer','tile.pbf']
+		}));
+
+		server.initialize(function(err) {
+			assert.isFalse(!!err, err);
+			server.serve(req, false, function(status, buffer, headers) {
+				assert.equal(status, 200);
+				assert.equal(headers['Content-Type'], 'image/png');
+				assert.instanceOf(buffer, Buffer);
+				assertImage(__dirname + '/fixtures/world.png', buffer);
+				done();
+			});
+		});
+	});
 	it('should be able to rasterize 2X output', function(done) {
 		var server = new TileServer();
 
@@ -45,7 +77,7 @@ describe('"tilestrata-vtile-raster"', function() {
 			xml: __dirname + '/data/test.xml',
 			metatile: 4,
 			bufferSize: 256,
-			tileSize: 512, 
+			tileSize: 512,
 			scale: 2
 		};
 

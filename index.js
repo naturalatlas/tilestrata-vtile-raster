@@ -39,7 +39,7 @@ module.exports = function(common, options) {
 	 * @return {void}
 	 */
 	function serve(server, req, callback) {
-		source.getTile(req.z, req.x, req.y, callback);
+		source.getTile(req, callback);
 	}
 
 	return {

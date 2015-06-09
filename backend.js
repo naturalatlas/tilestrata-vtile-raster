@@ -37,12 +37,10 @@ function Backend(server, options) {
 			var z = +info[0];
 			var x = +info[1];
 			var y = +info[2];
-			var meta_z = z;
-			var meta_x = Math.floor(x / self.metatile) * self.metatile;
-			var meta_y = Math.floor(y / self.metatile) * self.metatile;
-			var dx = x - meta_x;
-			var dy = y - meta_y;
-			var key = [meta_z, meta_x, meta_y].join(',');
+			var metatileCoords = self.getMetatileCoords(z, x, y);
+			var dx = x - metatileCoords[1];
+			var dy = y - metatileCoords[2];
+			var key = metatileCoords.join(',');
 			self.metatilecache.get(key, function(err, tiles) {
 				if (err) return callback(err);
 				callback(null, tiles[dx+","+dy]);
@@ -55,12 +53,55 @@ function Backend(server, options) {
 		maxAge: 1000*30,
 		load: function(key, callback) {
 			var info = key.split(',');
-			self.getRasterMetatile(+info[0], +info[1], +info[2], function(err, metatile) {
-				if (err) return callback(err);
-				self.sliceMetatile(metatile, callback);
-			});
+			var metatile_z = +info[0];
+			var metatile_x = +info[1];
+			var metatile_y = +info[2];
+			var metatile_req = new TileRequest(metatile_x, metatile_y, metatile_z, self.pbflayer, self.pbffile);
+			self.getRasterMetatile(metatile_req, callback);
 		}
 	});
+};
+
+Backend.prototype.getTile = function(req, callback) {
+	var self = this;
+
+	function finish(err, buffer) {
+		if (err) return callback(err);
+		if (self.interactivity) {
+			var utfgrid = buffer;
+			buffer = new Buffer(JSON.stringify(utfgrid), 'utf8');
+			buffer._utfgrid = utfgrid;
+		}
+		callback(null, buffer, self.getHeader(buffer));
+	}
+
+	if (req.headers['x-tilestrata-skipcache']) {
+		var metatileCoords = this.getMetatileCoords(req.z, req.x, req.y);
+		var metatile_req = req.clone();
+		metatile_req.layer = self.pbflayer;
+		metatile_req.filename = self.pbffile;
+		metatile_req.z = metatileCoords[0];
+		metatile_req.x = metatileCoords[1];
+		metatile_req.y = metatileCoords[2];
+		this.getRasterMetatile(metatile_req, function(err, tiles) {
+			if (err) return callback(err);
+			var dx = req.x - metatile_req.x;
+			var dy = req.y - metatile_req.y;
+			finish(null, tiles[dx+","+dy]);
+		});
+	} else {
+		var key = [req.z, req.x, req.y].join(',');
+		this.tilecache.get(key, finish);
+	}
+};
+
+Backend.prototype.getMetatileCoords = function(z, x, y) {
+	var meta_z = z;
+	var meta_x = Math.floor(x / this.metatile) * this.metatile;
+	var meta_y = Math.floor(y / this.metatile) * this.metatile;
+	var dx = x - meta_x;
+	var dy = y - meta_y;
+	return [meta_z, meta_x, meta_y];
 };
 
 Backend.prototype.initialize = function(callback) {
@@ -76,20 +117,6 @@ Backend.prototype.initialize = function(callback) {
 	var dim = this.metatile * this.tileSize;
 	this.map = new mapnik.Map(dim, dim);
 	this.map.load(this.xml, mapOptions, callback);
-};
-
-Backend.prototype.getTile = function(z, x, y, callback) {
-	var self = this;
-	this.tilecache.get([z,x,y].join(','), function(err, buffer) {
-		if (err) return callback(err);
-		if (self.interactivity) {
-			var utfgrid = buffer;
-			buffer = new Buffer(JSON.stringify(utfgrid), 'utf8');
-			buffer._utfgrid = utfgrid;
-		}
-
-		callback(null, buffer, self.getHeader(buffer));
-	});
 };
 
 /**
@@ -116,14 +143,25 @@ Backend.prototype.getVectorTileInfo = function(z, x, y){
 	};
 };
 
-Backend.prototype.getVectorMetatile = function(z, x, y, callback) {
+Backend.prototype.getRasterMetatile = function(metatile_req, callback) {
 	var self = this;
-	var req = new TileRequest(x, y, z, this.pbflayer, this.pbffile);
-	this.tilesource.serve(this.server, req, function(err, buffer, headers) {
+	this.getVectorMetatile(metatile_req, function(err, vtile) {
+		if (err) return callback(err);
+		self.rasterize(metatile_req, vtile, function(err, image) {
+			if (err) return callback(err);
+			self.sliceMetatile(image, callback);
+		});
+	});
+};
+
+Backend.prototype.getVectorMetatile = function(metatile_req, callback) {
+	var self = this;
+
+	this.tilesource.serve(this.server, metatile_req, function(err, buffer, headers) {
 		if (err) return callback(err);
 		if (buffer instanceof mapnik.VectorTile) return callback(null, buffer);
 
-		var meta = self.getVectorTileInfo(z, x, y);
+		var meta = self.getVectorTileInfo(metatile_req.z, metatile_req.x, metatile_req.y);
 		var vtile = new mapnik.VectorTile(meta.z, meta.x, meta.y);
 		vtile._srcbytes = buffer.length;
 		vtile.setData(buffer);
@@ -133,33 +171,29 @@ Backend.prototype.getVectorMetatile = function(z, x, y, callback) {
 	});
 };
 
-Backend.prototype.getRasterMetatile = function(z, x, y, callback) {
+Backend.prototype.rasterize = function(metatile_req, vtile, callback) {
 	var self = this;
-	this.getVectorMetatile(z, x, y, function(err, vtile) {
-		if (err) return callback(err);
+	var image;
+	var dim = self.metatile * self.tileSize;
+	var options = {
+		scale: self.scale,
+		buffer_size: self.bufferSize,
 
-		var image;
-		var dim = self.metatile * self.tileSize;
-		var options = {
-			scale: self.scale,
-			buffer_size: self.bufferSize,
+		// vtile.z will be less than z if metatiling is used
+		// this forces the real scale denominator to be used
+		scale_denominator:  559082264.028 / (1 << metatile_req.z) / self.scale
+	};
 
-			// vtile.z will be less than z if metatiling is used
-			// this forces the real scale denominator to be used
-			scale_denominator:  559082264.028 / (1 << z) / self.scale
-		};
+	if (self.interactivity) {
+		image = new mapnik.Grid(dim,dim);
+		options.layer = self.map.parameters.interactivity_layer;
+		options.fields = self.map.parameters.interactivity_fields.split(',');
+		options.resolution = self.resolution;
+	} else {
+		image = new mapnik.Image(dim,dim);
+	}
 
-		if (self.interactivity) {
-			image = new mapnik.Grid(dim,dim);
-			options.layer = self.map.parameters.interactivity_layer;
-			options.fields = self.map.parameters.interactivity_fields.split(',');
-			options.resolution = self.resolution;
-		} else {
-			image = new mapnik.Image(dim,dim);
-		}
-
-		vtile.render(self.map, image, options, callback);
-	});
+	vtile.render(self.map, image, options, callback);
 };
 
 /**
