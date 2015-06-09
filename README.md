@@ -11,23 +11,38 @@ A [TileStrata](https://github.com/naturalatlas/tilestrata) plugin for rendering 
 var vtile = require('tilestrata-vtile');
 var vtileraster = require('tilestrata-vtile-raster');
 
-var common = {
+var opts_vector = {
     xml: '/path/to/map.xml',
     tileSize: 256,
     metatile: 1,
     bufferSize: 128
 };
 
+var opts_raster = {
+    xml: '/path/to/map-vt.xml',
+    tileSize: 256,
+    metatile: 1,
+    bufferSize: 128
+};
+
 server.layer('mylayer')
-    .route('t.pbf').use(vtile(common))
-    .route('t.png').use(vtileraster(common, {
+    .route('t.pbf').use(vtile(opts_vector))
+    .route('t.png').use(vtileraster(opts_raster, {
         tilesource: ['mylayer', 't.pbf']
     }))
-    .route('i.json').use(vtileraster(common, {
+    .route('i.json').use(vtileraster(opts_raster, {
         tilesource: ['mylayer', 't.pbf'],
         interactivity: true
     }));
 ```
+
+### Mapnik XML Notes
+
+tilestrata-vtile expects a typical mapnik xml file - the same as tilestrata-mapnik would expect. The XML for tilestrata-vtile-raster must have specialized for using vector-tiles however. It needs to differ from the typical xml file in the following ways:
+
+- The `srs` property must be removed or set to Web Mercator for each layer. *Mapnik reprojects the source data before putting it into vector tiles*
+- The `Datasource` for each layer must be removed. *Mapnik will try to get the data from the datasource instead of the vector tile if `Datasource` is still set*
+
 
 ## Contributing
 
