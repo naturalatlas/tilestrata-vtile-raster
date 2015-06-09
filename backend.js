@@ -62,6 +62,21 @@ function Backend(server, options) {
 	});
 };
 
+Backend.prototype.initialize = function(callback) {
+	// initialize mapnik
+	mapnik.register_default_input_plugins();
+	if (this.options.autoLoadFonts) {
+        if (mapnik.register_default_fonts) mapnik.register_default_fonts();
+        if (mapnik.register_system_fonts) mapnik.register_system_fonts();
+	}
+
+	// initialize map
+	var mapOptions = {base: path.dirname(this.xml) + '/'};
+	var dim = this.metatile * this.tileSize;
+	this.map = new mapnik.Map(dim, dim);
+	this.map.load(this.xml, mapOptions, callback);
+};
+
 Backend.prototype.getTile = function(req, callback) {
 	var self = this;
 
@@ -99,24 +114,7 @@ Backend.prototype.getMetatileCoords = function(z, x, y) {
 	var meta_z = z;
 	var meta_x = Math.floor(x / this.metatile) * this.metatile;
 	var meta_y = Math.floor(y / this.metatile) * this.metatile;
-	var dx = x - meta_x;
-	var dy = y - meta_y;
 	return [meta_z, meta_x, meta_y];
-};
-
-Backend.prototype.initialize = function(callback) {
-	// initialize mapnik
-	mapnik.register_default_input_plugins();
-	if (this.options.autoLoadFonts) {
-        if (mapnik.register_default_fonts) mapnik.register_default_fonts();
-        if (mapnik.register_system_fonts) mapnik.register_system_fonts();
-	}
-
-	// initialize map
-	var mapOptions = {base: path.dirname(this.xml) + '/'};
-	var dim = this.metatile * this.tileSize;
-	this.map = new mapnik.Map(dim, dim);
-	this.map.load(this.xml, mapOptions, callback);
 };
 
 /**
