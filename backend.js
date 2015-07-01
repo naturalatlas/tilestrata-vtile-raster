@@ -90,24 +90,10 @@ Backend.prototype.getTile = function(req, callback) {
 		callback(null, buffer, self.getHeader(buffer));
 	}
 
-	if (req.headers['x-tilestrata-skipcache']) {
-		var metatileCoords = this.getMetatileCoords(req.z, req.x, req.y);
-		var metatile_req = req.clone();
-		metatile_req.layer = self.pbflayer;
-		metatile_req.filename = self.pbffile;
-		metatile_req.z = metatileCoords[0];
-		metatile_req.x = metatileCoords[1];
-		metatile_req.y = metatileCoords[2];
-		this.getRasterMetatile(metatile_req, function(err, tiles) {
-			if (err) return callback(err);
-			var dx = req.x - metatile_req.x;
-			var dy = req.y - metatile_req.y;
-			finish(null, tiles[dx+","+dy]);
-		});
-	} else {
-		var key = [req.z, req.x, req.y].join(',');
-		this.tilecache.get(key, finish);
-	}
+	var skipcache == !!req.headers['x-tilestrata-skipcache'];
+
+	var key = [req.z, req.x, req.y, skipcache].join(',');
+	this.tilecache.get(key, finish);
 };
 
 Backend.prototype.getMetatileCoords = function(z, x, y) {
