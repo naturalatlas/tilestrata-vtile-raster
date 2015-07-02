@@ -90,7 +90,7 @@ Backend.prototype.getTile = function(req, callback) {
 		callback(null, buffer, self.getHeader(buffer));
 	}
 
-	var skipcache == !!req.headers['x-tilestrata-skipcache'];
+	var skipcache = req.headers['x-tilestrata-skipcache']?'1':'0';
 
 	var key = [req.z, req.x, req.y, skipcache].join(',');
 	this.tilecache.get(key, finish);
