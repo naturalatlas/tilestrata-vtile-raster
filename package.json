@@ -1,6 +1,6 @@
 {
   "name": "tilestrata-vtile-raster",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A TileStrata plugin for rendering vector tiles to images",
   "author": "Brandon Reavis <brandon@naturalatlas.com>",
   "license": "Apache License, v2.0",
@@ -36,6 +36,6 @@
   },
   "peerDependencies": {
     "tilestrata": "*",
-    "mapnik": ">=1.4.9"
+    "mapnik": "*"
   }
 }
