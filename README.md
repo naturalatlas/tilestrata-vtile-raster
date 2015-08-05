@@ -28,13 +28,35 @@ var opts_raster = {
 server.layer('mylayer')
     .route('t.pbf').use(vtile(opts_vector))
     .route('t.png').use(vtileraster(opts_raster, {
-        tilesource: ['mylayer', 't.pbf']
+        tilesource: {layer: 'mylayer', file: 't.pbf'}
     }))
     .route('i.json').use(vtileraster(opts_raster, {
-        tilesource: ['mylayer', 't.pbf'],
+        tilesource: {layer: 'mylayer', file: 't.pbf'},
         interactivity: true
     }));
 ```
+
+### Remote tile server
+
+When the vector tiles are served by another server, you can
+use a tms URL to fetch them, for example:
+
+```js
+var options = {
+    xml: '/path/to/mapnik-style.xml',
+    tileSize: 256,
+    metatile: 1,
+    bufferSize: 128,
+    tilesource: {
+        tms: 'http://domain.com/tiles/{z}/{x}/{y}.pbf'
+    }
+
+};
+
+server.layer('mylayer')
+      .route('t.png').use(vtileraster(options));
+```
+
 
 ### Mapnik XML Notes
 

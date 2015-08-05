@@ -5,6 +5,7 @@ var TileStrata = require('tilestrata');
 var TileRequest = TileStrata.TileRequest;
 var AsyncCache = require('async-cache');
 var dependency = require('tilestrata-dependency');
+var request = require('request');
 
 module.exports = Backend;
 
@@ -19,10 +20,9 @@ function Backend(server, options) {
 	this.format = this.interactivity ? "utf" : (options.format || "png");
 	this.options = options;
 
-	this.pbflayer = options.tilesource[0];
-	this.pbffile = options.tilesource[1];
+	this.tilesource = options.tilesource;
 
-	this.tilesource = dependency(this.pbflayer, this.pbffile);
+	if (options.tilesource.layer) this.sourceServer = dependency(options.tilesource.layer, options.tilesource.file);
 	this.bufferSize = options.bufferSize;
 	this.metatile = options.metatile;
 
@@ -68,8 +68,8 @@ Backend.prototype.initialize = function(callback) {
 	// initialize mapnik
 	mapnik.register_default_input_plugins();
 	if (this.options.autoLoadFonts) {
-        if (mapnik.register_default_fonts) mapnik.register_default_fonts();
-        if (mapnik.register_system_fonts) mapnik.register_system_fonts();
+		if (mapnik.register_default_fonts) mapnik.register_default_fonts();
+		if (mapnik.register_system_fonts) mapnik.register_system_fonts();
 	}
 
 	// initialize map
@@ -139,21 +139,67 @@ Backend.prototype.getRasterMetatile = function(metatile_req, callback) {
 	});
 };
 
+Backend.prototype.template = function (str, data) {
+	return str.replace(/\{ *([\w_]+) *\}/g, function (str, key) {
+		var value = data[key];
+		if (value === undefined) {
+			throw new Error('No value provided for variable ' + str);
+		} else if (typeof value === 'function') {
+			value = value(data);
+		}
+		return value;
+	});
+};
+
+
 Backend.prototype.getVectorMetatile = function(metatile_req, callback) {
 	var self = this;
+	var meta = self.getVectorTileInfo(metatile_req.z, metatile_req.x, metatile_req.y);
+	var vtile = new mapnik.VectorTile(meta.z, meta.x, meta.y);
+	if (this.sourceServer) {
+		this.tilesource.serve(this.server, metatile_req, function(err, buffer, headers) {
+			if (err) return callback(err);
+			if (buffer instanceof mapnik.VectorTile) return callback(null, buffer);
 
-	this.tilesource.serve(this.server, metatile_req, function(err, buffer, headers) {
-		if (err) return callback(err);
-		if (buffer instanceof mapnik.VectorTile) return callback(null, buffer);
-
-		var meta = self.getVectorTileInfo(metatile_req.z, metatile_req.x, metatile_req.y);
-		var vtile = new mapnik.VectorTile(meta.z, meta.x, meta.y);
-		vtile._srcbytes = buffer.length;
-		vtile.setData(buffer);
-		vtile.parse(function(err) {
-			callback(err, vtile);
+			var meta = self.getVectorTileInfo(metatile_req.z, metatile_req.x, metatile_req.y);
+			var vtile = new mapnik.VectorTile(meta.z, meta.x, meta.y);
+			vtile._srcbytes = buffer.length;
+			vtile.setData(buffer);
+			vtile.parse(function(err) {
+				callback(err, vtile);
+			});
 		});
-	});
+	} else {
+		var parse = function (data, resp) {
+			try {
+				vtile.setData(data);
+				vtile.parse();
+			} catch (error) {
+				callback(new Error('Unable to parse vector tile data for uri ' + resp.request.uri.href));
+			}
+			callback(null, vtile);
+		};
+		var options = {
+			uri: self.template(this.tilesource.tms, meta),
+			encoding: null  // we want a buffer, not a string
+		};
+		request(options, function onResponse (err, resp, body) {
+			if (err) return callback(err);
+			var compression = false;
+			if (resp.headers['content-encoding'] === 'gzip') compression = 'gunzip';
+			else if (resp.headers['content-encoding'] === 'deflate') compression = 'inflate';
+			else if (body && body[0] === 0x1F && body[1] === 0x8B) compression = 'gunzip';
+			else if (body && body[0] === 0x78 && body[1] === 0x9C) compression = 'inflate';
+			if (compression) {
+				zlib[compression](body, function(err, data) {
+					if (err) return callback(err);
+					parse(data, resp);
+				});
+			} else {
+				parse(body, resp);
+			}
+		});
+	}
 };
 
 Backend.prototype.rasterize = function(metatile_req, vtile, callback) {
