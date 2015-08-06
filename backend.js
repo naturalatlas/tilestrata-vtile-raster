@@ -67,6 +67,9 @@ function Backend(server, options) {
 Backend.prototype.initialize = function(callback) {
 	// initialize mapnik
 	mapnik.register_default_input_plugins();
+	if (this.options.fontdir) {
+		mapnik.register_fonts(this.options.fontdir, {recurse: true});
+	}
 	if (this.options.autoLoadFonts) {
         if (mapnik.register_default_fonts) mapnik.register_default_fonts();
         if (mapnik.register_system_fonts) mapnik.register_system_fonts();
