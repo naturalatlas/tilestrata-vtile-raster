@@ -168,7 +168,7 @@ describe('"tilestrata-vtile-raster"', function() {
 				assert.equal(status, 200);
 				assert.equal(headers['Content-Type'], 'image/png');
 				assert.instanceOf(buffer, Buffer);
-				assertImage(__dirname + '/fixtures/world.png', buffer);
+				assertImage(__dirname + '/fixtures/world_overzoom.png', buffer);
 				done();
 			});
 		});
