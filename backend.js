@@ -26,6 +26,8 @@ function Backend(server, options) {
 	this.bufferSize = options.bufferSize;
 	this.metatile = options.metatile;
 
+	this.source_max_zoom = server.layer(this.pbflayer).options.maxZoom;
+
 	this.server = server;
 	this.map = null;
 
@@ -141,6 +143,16 @@ Backend.prototype.getRasterMetatile = function(metatile_req, callback) {
 
 Backend.prototype.getVectorMetatile = function(metatile_req, callback) {
 	var self = this;
+
+	//overzooming
+	if(this.source_max_zoom && metatile_req.z > this.source_max_zoom){
+		var dz = metatile_req.z - this.source_max_zoom;
+		var d = 1 << dz;
+		metatile_req = metatile_req.clone();
+		metatile_req.x = Math.floor(metatile_req.x / d);
+		metatile_req.y = Math.floor(metatile_req.y / d);
+		metatile_req.z = this.source_max_zoom;
+	}
 
 	this.tilesource.serve(this.server, metatile_req, function(err, buffer, headers) {
 		if (err) return callback(err);

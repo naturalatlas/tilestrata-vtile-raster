@@ -7,5 +7,5 @@ function im(image) {
 }
 
 module.exports = function(expected, actual) {
-	assert.equal(0, im(expected).compare(im(actual)), 'Images should be equal');
+	assert.equal(im(expected).compare(im(actual)), 0, 'Images should be equal');
 };

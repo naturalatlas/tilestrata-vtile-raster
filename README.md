@@ -25,16 +25,22 @@ var opts_raster = {
     bufferSize: 128
 };
 
+server.layer('myvectortiles', {maxZoom: 14})
+    .route('t.pbf').use(vtile(opts_vector));
+
 server.layer('mylayer')
-    .route('t.pbf').use(vtile(opts_vector))
     .route('t.png').use(vtileraster(opts_raster, {
-        tilesource: ['mylayer', 't.pbf']
+        tilesource: ['myvectortiles', 't.pbf']
     }))
     .route('i.json').use(vtileraster(opts_raster, {
-        tilesource: ['mylayer', 't.pbf'],
+        tilesource: ['myvectortiles', 't.pbf'],
         interactivity: true
     }));
 ```
+
+### Overzooming
+
+If the `maxZoom `property is set on the vector tile layer, the plugin will render higher zoom level tiles with the vector tiles from the max zoom level.
 
 ### Mapnik XML Notes
 
