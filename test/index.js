@@ -97,6 +97,7 @@ describe('"tilestrata-vtile-raster"', function() {
 				assert.equal(status, 200);
 				assert.equal(headers['Content-Type'], 'image/png');
 				assert.instanceOf(buffer, Buffer);
+				// fs.writeFileSync(__dirname + '/fixtures/world@2x.png', buffer);
 				assertImage(__dirname + '/fixtures/world@2x.png', buffer);
 				done();
 			});
