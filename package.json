@@ -1,5 +1,5 @@
 {
-  "name": "tilestrata-vtile-raster",
+  "name": "tilestrata-vtile-raster-overzoom",
   "version": "0.2.2",
   "description": "A TileStrata plugin for rendering vector tiles to images",
   "author": "Brandon Reavis <brandon@naturalatlas.com>",
