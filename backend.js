@@ -172,10 +172,16 @@ Backend.prototype.rasterize = function(metatile_req, vtile, callback) {
 	var self = this;
 	var image;
 	var dim = self.metatile * self.tileSize;
+
+	//metatile coordinates not considering overzooming
+	var meta = this.getVectorTileInfo(metatile_req.z, metatile_req.x, metatile_req.y);
+
 	var options = {
 		scale: self.scale,
 		buffer_size: self.bufferSize,
-
+		z: meta.z,
+		x: meta.x,
+		y: meta.y,
 		// vtile.z will be less than z if metatiling is used
 		// this forces the real scale denominator to be used
 		scale_denominator:  559082264.028 / (1 << metatile_req.z) / self.scale
