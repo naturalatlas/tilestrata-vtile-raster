@@ -1,8 +1,8 @@
 var _ = require('lodash');
 var Backend = require('./backend.js');
 
-module.exports = function(common, options) {
-	var defaults = {
+module.exports = function() {
+	var options = {
 		xml: null,
 		resolution: 4,
 		bufferSize: 128,
@@ -13,7 +13,9 @@ module.exports = function(common, options) {
 		autoLoadFonts: true
 	};
 
-	options = _.extend({}, defaults, common, options);
+	for (var i = 0, n = arguments.length; i < n; i++) {
+		_.extend(options, arguments[i]);
+	}
 
 	var source;
 

@@ -3,7 +3,7 @@ var path = require('path');
 var mapnik = require('mapnik');
 var TileStrata = require('tilestrata');
 var TileRequest = TileStrata.TileRequest;
-var AsyncCache = require('async-cache');
+var AsyncCache = require('active-cache/async');
 var dependency = require('tilestrata-dependency');
 
 module.exports = Backend;
@@ -31,28 +31,10 @@ function Backend(server, options) {
 	this.server = server;
 	this.map = null;
 
-	this.tilecache = new AsyncCache({
-		max: 64,
-		maxAge: 1000*30,
-		load: function(key, callback) {
-			var info = key.split(',');
-			var z = +info[0];
-			var x = +info[1];
-			var y = +info[2];
-			var metatileCoords = self.getMetatileCoords(z, x, y);
-			var dx = x - metatileCoords[1];
-			var dy = y - metatileCoords[2];
-			var key = metatileCoords.join(',')+','+info[3];
-			self.metatilecache.get(key, function(err, tiles) {
-				if (err) return callback(err);
-				callback(null, tiles[dx+","+dy]);
-			});
-		}
-	});
-
 	this.metatilecache = new AsyncCache({
-		max: 64,
-		maxAge: 1000*30,
+		max: options.cacheMax || 16,
+		maxAge: options.cacheMaxAge || 1000*15,
+		interval: options.cacheClearInterval || 5000,
 		load: function(key, callback) {
 			var info = key.split(',');
 			var metatile_z = +info[0];
@@ -95,8 +77,14 @@ Backend.prototype.getTile = function(req, callback) {
 	}
 
 	var skipcache = req.headers['x-tilestrata-skipcache']?'1':'0';
-	var key = [req.z, req.x, req.y, skipcache].join(',');
-	this.tilecache.get(key, finish);
+	var metatileCoords = this.getMetatileCoords(req.z, req.x, req.y);
+	var dx = req.x - metatileCoords[1];
+	var dy = req.y - metatileCoords[2];
+	var key = metatileCoords.join(',')+','+skipcache;
+	this.metatilecache.get(key, function(err, tiles) {
+		if (err) return callback(err);
+		finish(null, tiles[dx+","+dy]);
+	});
 };
 
 Backend.prototype.getMetatileCoords = function(z, x, y) {
