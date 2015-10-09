@@ -3,11 +3,61 @@ var vtileraster = require('../index.js');
 var tilestrata = require('tilestrata');
 var TileServer = tilestrata.TileServer;
 var TileRequest = tilestrata.TileRequest;
+var Backend = require('../backend.js');
 var assert = require('chai').assert;
 var assertImage = require('./utils/assertImage.js');
 var fs = require('fs');
 
 describe('"tilestrata-vtile-raster"', function() {
+	it('should match tilelive-mapnik metatile calculation (consistency)', function() {
+		// this test is to enforce consistency w/tilelive-mapnik/tilestrata-mapnik
+		// https://github.com/mapbox/tilelive-mapnik/blob/37a96814534910b4b7df48ce2fad119edd7defe4/lib/render.js
+		var EARTH_RADIUS = 6378137;
+		var EARTH_DIAMETER = EARTH_RADIUS * 2;
+		var EARTH_CIRCUMFERENCE = EARTH_DIAMETER * Math.PI;
+		var MAX_RES = EARTH_CIRCUMFERENCE / 256;
+		var ORIGIN_SHIFT = EARTH_CIRCUMFERENCE/2;
+
+		function tileliveCalculateMetatile(options) {
+			var z = +options.z, x = +options.x, y = +options.y;
+			var total = 1 << z;
+			var resolution = MAX_RES / total;
+
+			// Make sure we start at a metatile boundary.
+			x -= x % options.metatile;
+			y -= y % options.metatile;
+
+			// Make sure we don't calculcate a metatile that is larger than the bounds.
+			var metaWidth  = Math.min(options.metatile, total, total - x);
+			var metaHeight = Math.min(options.metatile, total, total - y);
+
+			// Generate all tile coordinates that are within the metatile.
+			var tiles = [];
+			for (var dx = 0; dx < metaWidth; dx++) {
+				for (var dy = 0; dy < metaHeight; dy++) {
+					tiles.push([ z, x + dx, y + dy ]);
+				}
+			}
+
+			var minx = (x * 256) * resolution - ORIGIN_SHIFT;
+			var miny = -((y + metaHeight) * 256) * resolution + ORIGIN_SHIFT;
+			var maxx = ((x + metaWidth) * 256) * resolution - ORIGIN_SHIFT;
+			var maxy = -((y * 256) * resolution - ORIGIN_SHIFT);
+			return {
+				width: metaWidth * options.tileSize,
+				height: metaHeight * options.tileSize,
+				x: x, y: y,
+				tiles: tiles,
+				bbox: [ minx, miny, maxx, maxy ]
+			};
+		}
+
+		var req = {metatile: 4, z: 13, x: 1588, y: 2952};
+		var tilelive_result = tileliveCalculateMetatile(req);
+		var tilestrata_result = Backend.calculateMetatile(req.metatile, req.z, req.x, req.y);
+		assert.equal(tilelive_result.x, tilestrata_result[1], 'x');
+		assert.equal(tilelive_result.y, tilestrata_result[2], 'y');
+	});
 	it('should be able to rasterize output', function(done) {
 		var server = new TileServer();
 

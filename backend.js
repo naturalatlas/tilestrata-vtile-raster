@@ -77,7 +77,7 @@ Backend.prototype.getTile = function(req, callback) {
 	}
 
 	var skipcache = req.headers['x-tilestrata-skipcache']?'1':'0';
-	var metatileCoords = this.getMetatileCoords(req.z, req.x, req.y);
+	var metatileCoords = Backend.calculateMetatile(this.metatile, req.z, req.x, req.y);
 	var dx = req.x - metatileCoords[1];
 	var dy = req.y - metatileCoords[2];
 	var key = metatileCoords.join(',')+','+skipcache;
@@ -85,13 +85,6 @@ Backend.prototype.getTile = function(req, callback) {
 		if (err) return callback(err);
 		finish(null, tiles[dx+","+dy]);
 	});
-};
-
-Backend.prototype.getMetatileCoords = function(z, x, y) {
-	var meta_z = z;
-	var meta_x = Math.floor(x / this.metatile) * this.metatile;
-	var meta_y = Math.floor(y / this.metatile) * this.metatile;
-	return [meta_z, meta_x, meta_y];
 };
 
 /**
@@ -241,4 +234,11 @@ Backend.prototype.getHeader = function(buffer) {
 	}
 
 	return header;
+};
+
+Backend.calculateMetatile = function(metatile, z, x, y) {
+	var meta_z = z;
+	var meta_x = Math.floor(x / metatile) * metatile;
+	var meta_y = Math.floor(y / metatile) * metatile;
+	return [meta_z, meta_x, meta_y];
 };
