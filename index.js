@@ -45,6 +45,7 @@ module.exports = function() {
 	}
 
 	return {
+		name: 'vtile-raster',
 		init: initialize,
 		serve: serve
 	};
