@@ -122,6 +122,7 @@ Backend.prototype.getRasterMetatile = function(metatile_req, callback) {
 
 Backend.prototype.getVectorMetatile = function(metatile_req, callback) {
 	var self = this;
+	var overzoomed = false;
 
 	// overzooming
 	if (this.source_max_zoom && metatile_req.z > this.source_max_zoom) {
@@ -131,11 +132,15 @@ Backend.prototype.getVectorMetatile = function(metatile_req, callback) {
 		metatile_req.x = Math.floor(metatile_req.x / d);
 		metatile_req.y = Math.floor(metatile_req.y / d);
 		metatile_req.z = this.source_max_zoom;
+		overzoomed = true;
 	}
 
 	this.tilesource.serve(this.server, metatile_req, function(err, buffer) {
 		if (err) return callback(err);
-		if (buffer._vtile instanceof mapnik.VectorTile) {
+
+		// only use the vector tile instance directly if the extent is valid for the requested tile,
+		// which won't be the case for metatiling and overzooming
+		if (!self.metatile && !overzoomed && buffer._vtile instanceof mapnik.VectorTile) {
 			return callback(null, buffer._vtile);
 		}
 
