@@ -135,7 +135,9 @@ Backend.prototype.getVectorMetatile = function(metatile_req, callback) {
 
 	this.tilesource.serve(this.server, metatile_req, function(err, buffer) {
 		if (err) return callback(err);
-		if (buffer instanceof mapnik.VectorTile) return callback(null, buffer);
+		if (buffer._vtile instanceof mapnik.VectorTile) {
+			return callback(null, buffer._vtile);
+		}
 
 		var meta = self.getVectorTileInfo(metatile_req.z, metatile_req.x, metatile_req.y);
 		var vtile = new mapnik.VectorTile(meta.z, meta.x, meta.y);
