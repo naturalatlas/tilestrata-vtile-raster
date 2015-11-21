@@ -122,7 +122,6 @@ Backend.prototype.getRasterMetatile = function(metatile_req, callback) {
 
 Backend.prototype.getVectorMetatile = function(metatile_req, callback) {
 	var self = this;
-	var overzoomed = false;
 
 	// overzooming
 	if (this.source_max_zoom && metatile_req.z > this.source_max_zoom) {
@@ -132,19 +131,21 @@ Backend.prototype.getVectorMetatile = function(metatile_req, callback) {
 		metatile_req.x = Math.floor(metatile_req.x / d);
 		metatile_req.y = Math.floor(metatile_req.y / d);
 		metatile_req.z = this.source_max_zoom;
-		overzoomed = true;
 	}
 
 	this.tilesource.serve(this.server, metatile_req, function(err, buffer) {
 		if (err) return callback(err);
+		var meta = self.getVectorTileInfo(metatile_req.z, metatile_req.x, metatile_req.y);
 
 		// only use the vector tile instance directly if the extent is valid for the requested tile,
 		// which won't be the case for metatiling and overzooming
-		if (self.metatile === 1 && !overzoomed && buffer._vtile instanceof mapnik.VectorTile) {
+		if (buffer._vtile instanceof mapnik.VectorTile
+			&& buffer._vx === meta.x
+			&& buffer._vy === meta.y
+			&& buffer._vz === meta.z) {
 			return callback(null, buffer._vtile);
 		}
 
-		var meta = self.getVectorTileInfo(metatile_req.z, metatile_req.x, metatile_req.y);
 		var vtile = new mapnik.VectorTile(meta.z, meta.x, meta.y);
 
 		// prevents "cannot accept empty buffer as protobuf"
