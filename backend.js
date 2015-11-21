@@ -6,8 +6,6 @@ var TileRequest = TileStrata.TileRequest;
 var AsyncCache = require('active-cache/async');
 var dependency = require('tilestrata-dependency');
 
-module.exports = Backend;
-
 function Backend(server, options) {
 	var self = this;
 
@@ -16,7 +14,7 @@ function Backend(server, options) {
 	this.tileSize = options.tileSize;
 	this.resolution = options.resolution;
 	this.interactivity = options.interactivity;
-	this.format = this.interactivity ? "utf" : (options.format || "png");
+	this.format = this.interactivity ? 'utf' : (options.format || 'png');
 	this.options = options;
 
 	this.pbflayer = options.tilesource[0];
@@ -33,27 +31,27 @@ function Backend(server, options) {
 
 	this.metatilecache = new AsyncCache({
 		max: options.cacheMax || 16,
-		maxAge: options.cacheMaxAge || 1000*15,
+		maxAge: options.cacheMaxAge || 1000 * 15,
 		interval: options.cacheClearInterval || 5000,
 		load: function(key, callback) {
 			var info = key.split(',');
 			var metatile_z = +info[0];
 			var metatile_x = +info[1];
 			var metatile_y = +info[2];
-			var skipcache = !!parseInt(info[3],10);
+			var skipcache = !!parseInt(info[3], 10);
 			var metatile_req = new TileRequest(metatile_x, metatile_y, metatile_z, self.pbflayer, self.pbffile);
 			if (skipcache) metatile_req.headers['x-tilestrata-skipcache'] = '*';
 			self.getRasterMetatile(metatile_req, callback);
 		}
 	});
-};
+}
 
 Backend.prototype.initialize = function(callback) {
 	// initialize mapnik
 	mapnik.register_default_input_plugins();
 	if (this.options.autoLoadFonts) {
-        if (mapnik.register_default_fonts) mapnik.register_default_fonts();
-        if (mapnik.register_system_fonts) mapnik.register_system_fonts();
+		if (mapnik.register_default_fonts) mapnik.register_default_fonts();
+		if (mapnik.register_system_fonts) mapnik.register_system_fonts();
 	}
 
 	// initialize map
@@ -76,14 +74,14 @@ Backend.prototype.getTile = function(req, callback) {
 		callback(null, buffer, self.getHeader(buffer));
 	}
 
-	var skipcache = req.headers['x-tilestrata-skipcache']?'1':'0';
+	var skipcache = req.headers['x-tilestrata-skipcache'] ? '1' : '0';
 	var metatileCoords = Backend.calculateMetatile(this.metatile, req.z, req.x, req.y);
 	var dx = req.x - metatileCoords[1];
 	var dy = req.y - metatileCoords[2];
-	var key = metatileCoords.join(',')+','+skipcache;
+	var key = metatileCoords.join(',') + ',' + skipcache;
 	this.metatilecache.get(key, function(err, tiles) {
 		if (err) return callback(err);
-		finish(null, tiles[dx+","+dy]);
+		finish(null, tiles[dx + ',' + dy]);
 	});
 };
 
@@ -96,13 +94,13 @@ Backend.prototype.getTile = function(req, callback) {
  * @param  {int} y
  * @return {object}
  */
-Backend.prototype.getVectorTileInfo = function(z, x, y){
+Backend.prototype.getVectorTileInfo = function(z, x, y) {
 	var dz;
 	if (this.metatile === 1) dz = 0;
 	else if (this.metatile === 2) dz = 1;
 	else if (this.metatile === 4) dz = 2;
 	else if (this.metatile === 8) dz = 3;
-	else throw new Error("Unsupported metatile setting: "+this.metatile);
+	else throw new Error('Unsupported metatile setting: ' + this.metatile);
 
 	return {
 		x: Math.floor(x / this.metatile),
@@ -125,8 +123,8 @@ Backend.prototype.getRasterMetatile = function(metatile_req, callback) {
 Backend.prototype.getVectorMetatile = function(metatile_req, callback) {
 	var self = this;
 
-	//overzooming
-	if(this.source_max_zoom && metatile_req.z > this.source_max_zoom){
+	// overzooming
+	if (this.source_max_zoom && metatile_req.z > this.source_max_zoom) {
 		var dz = metatile_req.z - this.source_max_zoom;
 		var d = 1 << dz;
 		metatile_req = metatile_req.clone();
@@ -135,7 +133,7 @@ Backend.prototype.getVectorMetatile = function(metatile_req, callback) {
 		metatile_req.z = this.source_max_zoom;
 	}
 
-	this.tilesource.serve(this.server, metatile_req, function(err, buffer, headers) {
+	this.tilesource.serve(this.server, metatile_req, function(err, buffer) {
 		if (err) return callback(err);
 		if (buffer instanceof mapnik.VectorTile) return callback(null, buffer);
 
@@ -154,7 +152,7 @@ Backend.prototype.rasterize = function(metatile_req, vtile, callback) {
 	var image;
 	var dim = self.metatile * self.tileSize;
 
-	//metatile coordinates not considering overzooming
+	// metatile coordinates not considering overzooming
 	var meta = this.getVectorTileInfo(metatile_req.z, metatile_req.x, metatile_req.y);
 
 	var options = {
@@ -165,16 +163,16 @@ Backend.prototype.rasterize = function(metatile_req, vtile, callback) {
 		y: meta.y,
 		// vtile.z will be less than z if metatiling is used
 		// this forces the real scale denominator to be used
-		scale_denominator:  559082264.028 / (1 << metatile_req.z) / self.scale
+		scale_denominator: 559082264.028 / (1 << metatile_req.z) / self.scale
 	};
 
 	if (self.interactivity) {
-		image = new mapnik.Grid(dim,dim);
+		image = new mapnik.Grid(dim, dim);
 		options.layer = self.map.parameters.interactivity_layer;
 		options.fields = self.map.parameters.interactivity_fields.split(',');
 		options.resolution = self.resolution;
 	} else {
-		image = new mapnik.Image(dim,dim);
+		image = new mapnik.Image(dim, dim);
 	}
 
 	vtile.render(self.map, image, options, callback);
@@ -206,17 +204,17 @@ Backend.prototype.sliceMetatile = function(image, callback) {
 	async.eachSeries(coords, function(coord, callback) {
 		var dx = coord.x;
 		var dy = coord.y;
-		var view = image.view(dx*self.tileSize, dy*self.tileSize, self.tileSize, self.tileSize);
-		self.encodeImage(view, {}, function(err, buffer){
-			if (!err) result[dx+","+dy] = buffer;
+		var view = image.view(dx * self.tileSize, dy * self.tileSize, self.tileSize, self.tileSize);
+		self.encodeImage(view, {}, function(err, buffer) {
+			if (!err) result[dx + ',' + dy] = buffer;
 			callback(err);
 		});
-	}, function(err){
-		callback(err, result)
+	}, function(err) {
+		callback(err, result);
 	});
 };
 
-Backend.prototype.encodeImage = function(image, options, callback){
+Backend.prototype.encodeImage = function(image, options, callback) {
 	if (this.interactivity) {
 		image.encode(options, callback);
 	} else {
@@ -224,13 +222,13 @@ Backend.prototype.encodeImage = function(image, options, callback){
 	}
 };
 
-Backend.prototype.getHeader = function(buffer) {
+Backend.prototype.getHeader = function() {
 	var header = {};
 
 	if (this.interactivity) {
 		header['Content-Type'] = 'application/json; charset=utf-8';
 	} else {
-		header['Content-Type'] = 'image/'+this.format;
+		header['Content-Type'] = 'image/' + this.format;
 	}
 
 	return header;
@@ -242,3 +240,5 @@ Backend.calculateMetatile = function(metatile, z, x, y) {
 	var meta_y = Math.floor(y / metatile) * metatile;
 	return [meta_z, meta_x, meta_y];
 };
+
+module.exports = Backend;

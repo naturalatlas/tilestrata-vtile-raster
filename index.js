@@ -8,7 +8,7 @@ module.exports = function() {
 		bufferSize: 128,
 		tileSize: 256,
 		scale: 1,
-		format: "png",
+		format: 'png',
 		interactivity: false,
 		autoLoadFonts: true
 	};

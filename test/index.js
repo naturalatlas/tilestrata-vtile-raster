@@ -1,4 +1,3 @@
-var _ = require('lodash');
 var vtileraster = require('../index.js');
 var tilestrata = require('tilestrata');
 var TileServer = tilestrata.TileServer;
@@ -16,7 +15,7 @@ describe('"tilestrata-vtile-raster"', function() {
 		var EARTH_DIAMETER = EARTH_RADIUS * 2;
 		var EARTH_CIRCUMFERENCE = EARTH_DIAMETER * Math.PI;
 		var MAX_RES = EARTH_CIRCUMFERENCE / 256;
-		var ORIGIN_SHIFT = EARTH_CIRCUMFERENCE/2;
+		var ORIGIN_SHIFT = EARTH_CIRCUMFERENCE / 2;
 
 		function tileliveCalculateMetatile(options) {
 			var z = +options.z, x = +options.x, y = +options.y;
@@ -74,7 +73,7 @@ describe('"tilestrata-vtile-raster"', function() {
 			}
 		});
 		server.layer('layer').route('tile.png').use(vtileraster(opts, {
-			tilesource: ['layer','tile.pbf']
+			tilesource: ['layer', 'tile.pbf']
 		}));
 
 		server.initialize(function(err) {
@@ -106,7 +105,7 @@ describe('"tilestrata-vtile-raster"', function() {
 			}
 		});
 		server.layer('layer').route('tile.png').use(vtileraster(opts, {
-			tilesource: ['layer','tile.pbf']
+			tilesource: ['layer', 'tile.pbf']
 		}));
 
 		server.initialize(function(err) {
@@ -138,7 +137,7 @@ describe('"tilestrata-vtile-raster"', function() {
 			}
 		});
 		server.layer('layer').route('tile.png').use(vtileraster(opts, {
-			tilesource: ['layer','tile.pbf']
+			tilesource: ['layer', 'tile.pbf']
 		}));
 
 		server.initialize(function(err) {
@@ -169,7 +168,7 @@ describe('"tilestrata-vtile-raster"', function() {
 			}
 		});
 		server.layer('layer').route('tile.json').use(vtileraster(opts, {
-			tilesource: ['layer','tile.pbf'],
+			tilesource: ['layer', 'tile.pbf'],
 			interactivity: true
 		}));
 
@@ -209,7 +208,7 @@ describe('"tilestrata-vtile-raster"', function() {
 			}
 		});
 		server.layer('layer').route('tile.png').use(vtileraster(opts, {
-			tilesource: ['vtilelayer','tile.pbf']
+			tilesource: ['vtilelayer', 'tile.pbf']
 		}));
 
 		server.initialize(function(err) {
