@@ -4,6 +4,7 @@ var Backend = require('./backend.js');
 module.exports = function() {
 	var options = {
 		xml: null,
+		metatile: 1,
 		resolution: 4,
 		bufferSize: 128,
 		tileSize: 256,

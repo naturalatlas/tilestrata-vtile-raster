@@ -146,11 +146,17 @@ Backend.prototype.getVectorMetatile = function(metatile_req, callback) {
 
 		var meta = self.getVectorTileInfo(metatile_req.z, metatile_req.x, metatile_req.y);
 		var vtile = new mapnik.VectorTile(meta.z, meta.x, meta.y);
-		vtile._srcbytes = buffer.length;
-		vtile.setData(buffer);
-		vtile.parse(function(err) {
-			callback(err, vtile);
-		});
+
+		// prevents "cannot accept empty buffer as protobuf"
+		if (buffer.length) {
+			vtile._srcbytes = buffer.length;
+			vtile.setData(buffer);
+			vtile.parse(function(err) {
+				callback(err, vtile);
+			});
+		} else {
+			callback(null, vtile);
+		}
 	});
 };
 

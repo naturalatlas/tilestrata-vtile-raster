@@ -77,7 +77,7 @@ describe('"tilestrata-vtile-raster"', function() {
 		}));
 
 		server.initialize(function(err) {
-			assert.isFalse(!!err, err);
+			if (err) throw err;
 			server.serve(req, false, function(status, buffer, headers) {
 				assert.equal(status, 200);
 				assert.equal(headers['Content-Type'], 'image/png');
@@ -109,7 +109,7 @@ describe('"tilestrata-vtile-raster"', function() {
 		}));
 
 		server.initialize(function(err) {
-			assert.isFalse(!!err, err);
+			if (err) throw err;
 			server.serve(req, false, function(status, buffer, headers) {
 				assert.equal(status, 200);
 				assert.equal(headers['Content-Type'], 'image/png');
@@ -141,7 +141,7 @@ describe('"tilestrata-vtile-raster"', function() {
 		}));
 
 		server.initialize(function(err) {
-			assert.isFalse(!!err, err);
+			if (err) throw err;
 			server.serve(req, false, function(status, buffer, headers) {
 				assert.equal(status, 200);
 				assert.equal(headers['Content-Type'], 'image/png');
@@ -173,7 +173,7 @@ describe('"tilestrata-vtile-raster"', function() {
 		}));
 
 		server.initialize(function(err) {
-			assert.isFalse(!!err, err);
+			if (err) throw err;
 			server.serve(req, false, function(status, buffer, headers) {
 				assert.equal(status, 200);
 				assert.equal(headers['Content-Type'], 'application/json; charset=utf-8');
@@ -186,6 +186,31 @@ describe('"tilestrata-vtile-raster"', function() {
 				// for utfmerge, to prevent reparsing
 				assert.deepEqual(buffer._utfgrid, JSON.parse(json_expected));
 
+				done();
+			});
+		});
+	});
+	it('should not crash when given an empty buffer', function(done) {
+		var server = new TileServer();
+
+		var req = TileRequest.parse('/layer/5/5/12/tile.png');
+		server.layer('vtilelayer').route('tile.pbf').use({
+			serve: function(server, req, callback) {
+				return callback(null, new Buffer([]), {});
+			}
+		});
+		server.layer('layer').route('tile.png').use(vtileraster({
+			xml: __dirname + '/data/test.xml',
+			tilesource: ['vtilelayer', 'tile.pbf']
+		}));
+
+		server.initialize(function(err) {
+			if (err) throw err;
+			server.serve(req, false, function(status, buffer, headers) {
+				assert.equal(status, 200);
+				assert.equal(headers['Content-Type'], 'image/png');
+				assert.instanceOf(buffer, Buffer);
+				assertImage(__dirname + '/fixtures/world_empty.png', buffer);
 				done();
 			});
 		});
@@ -212,7 +237,7 @@ describe('"tilestrata-vtile-raster"', function() {
 		}));
 
 		server.initialize(function(err) {
-			assert.isFalse(!!err, err);
+			if (err) throw err;
 			server.serve(req, false, function(status, buffer, headers) {
 				assert.equal(status, 200);
 				assert.equal(headers['Content-Type'], 'image/png');
