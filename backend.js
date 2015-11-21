@@ -140,7 +140,7 @@ Backend.prototype.getVectorMetatile = function(metatile_req, callback) {
 
 		// only use the vector tile instance directly if the extent is valid for the requested tile,
 		// which won't be the case for metatiling and overzooming
-		if (!self.metatile && !overzoomed && buffer._vtile instanceof mapnik.VectorTile) {
+		if (self.metatile === 1 && !overzoomed && buffer._vtile instanceof mapnik.VectorTile) {
 			return callback(null, buffer._vtile);
 		}
 
