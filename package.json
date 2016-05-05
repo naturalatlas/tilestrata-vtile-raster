@@ -27,15 +27,15 @@
   "homepage": "https://github.com/naturalatlas/tilestrata-vtile-raster",
   "dependencies": {
     "active-cache": "^0.1.0",
-    "async": "~1.4.2",
-    "lodash": "~3.10.1",
+    "async": "^1.5.2",
+    "lodash": "~4.11.2",
     "tilestrata-dependency": "~0.5.0"
   },
   "devDependencies": {
-    "chai": "^3.3.0",
-    "eslint": "^1.10.1",
+    "chai": "^3.5.0",
+    "eslint": "^2.9.0",
     "eslint-config-naturalatlas": "latest",
-    "mocha": "^2.3.3"
+    "mocha": "^2.4.5"
   },
   "peerDependencies": {
     "tilestrata": "*",
