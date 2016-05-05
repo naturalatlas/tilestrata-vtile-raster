@@ -6,6 +6,9 @@ var TileRequest = TileStrata.TileRequest;
 var AsyncCache = require('active-cache/async');
 var dependency = require('tilestrata-dependency');
 
+var versionParts = mapnik.version.split('.');
+var NODE_MAPNIK_MAJORMINOR = Number(versionParts[0] + '.' + Number(versionParts[1]));
+
 function Backend(server, options) {
 	var self = this;
 
@@ -151,9 +154,14 @@ Backend.prototype.getVectorMetatile = function(metatile_req, callback) {
 		// prevents "cannot accept empty buffer as protobuf"
 		if (buffer.length) {
 			vtile._srcbytes = buffer.length;
-			vtile.setData(buffer);
-			vtile.parse(function(err) {
-				callback(err, vtile);
+			vtile.setData(buffer, function(err) {
+				if (err) return callback(err);
+				if (NODE_MAPNIK_MAJORMINOR < 3.5) {
+					return vtile.parse(function(err) {
+						callback(err, vtile);
+					});
+				}
+				callback(null, vtile);
 			});
 		} else {
 			callback(null, vtile);
