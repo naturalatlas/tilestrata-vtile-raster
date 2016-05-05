@@ -21,5 +21,6 @@ install:
   - npm install --fallback-to-build=false
   - npm install tilestrata
   - npm install mapnik@$NODE_MAPNIK_VERSION --fallback-to-build=false
+  - node -e "console.log(require('mapnik').version)"
 script:
   - make test && (make test-ci-coverage || true)

@@ -8,6 +8,8 @@ var assertImage = require('./utils/assertImage.js');
 var fs = require('fs');
 
 describe('"tilestrata-vtile-raster"', function() {
+	this.timeout(5000);
+
 	it('should match tilelive-mapnik metatile calculation (consistency)', function() {
 		// this test is to enforce consistency w/tilelive-mapnik/tilestrata-mapnik
 		// https://github.com/mapbox/tilelive-mapnik/blob/37a96814534910b4b7df48ce2fad119edd7defe4/lib/render.js
