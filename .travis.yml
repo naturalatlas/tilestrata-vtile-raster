@@ -1,11 +1,12 @@
 language: cpp
 compiler:
   - gcc
-matrix:
-  - NODE_NVM_VERSION="4" NODE_MAPNIK_VERSION="latest"
-  - NODE_NVM_VERSION="4" NODE_MAPNIK_VERSION="3.5"
-  - NODE_NVM_VERSION="4" NODE_MAPNIK_VERSION="3.4"
-  - NODE_NVM_VERSION="0.10" NODE_MAPNIK_VERSION="3.4"
+env:
+  matrix:
+    - NODE_NVM_VERSION="4" NODE_MAPNIK_VERSION="latest"
+    - NODE_NVM_VERSION="4" NODE_MAPNIK_VERSION="3.5"
+    - NODE_NVM_VERSION="4" NODE_MAPNIK_VERSION="3.4"
+    - NODE_NVM_VERSION="0.10" NODE_MAPNIK_VERSION="3.4"
 sudo: false
 before_install:
   # install c++11 capable libstdc++ without sudo
